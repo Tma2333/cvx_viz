@@ -9,3 +9,9 @@ Visualize convex optimization with ManimCE
 ```
 conda env create -f environment.yml
 ```
+
+Have not tested with other OS, you can try to follow official [ManimCE](https://docs.manim.community/en/stable/installation.html) installation guide. Or use Colab. 
+
+### Colab
+
+Check out this notebook for demo and setup cell to run it on colab. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Tma2333/cvx_viz/blob/main/demo.ipynb)
