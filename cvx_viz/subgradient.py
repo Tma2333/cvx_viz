@@ -17,7 +17,7 @@ class SubGradientDescent (CvxOptViz):
         return x1, x2 
     
     
-    def _test_derive_attribute(self):
+    def _check_derive_attribute(self):
         try:
             self.step_size
         except AttributeError:
@@ -37,7 +37,7 @@ class SubGradientDescentWithMomentum (CvxOptViz):
         return x1, x2 
     
     
-    def _test_derive_attribute(self):
+    def _check_derive_attribute(self):
         try:
             self.step_size
         except AttributeError:

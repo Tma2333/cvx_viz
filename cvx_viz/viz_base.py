@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 
 class CvxOptViz(ThreeDScene):
     def construct(self):
-        self._test_core_attribute()
-        self._test_derive_attribute()
+        # initialize necessary class variable
+        self._check_core_attribute()
+        self._check_derive_attribute()
         
         self.axes = ThreeDAxes()
         self.add(self.axes)
@@ -42,8 +43,8 @@ class CvxOptViz(ThreeDScene):
     
 
     def _set_level_set_info (self):
-        if self.num_level % 2:
-            self.num_level += 1
+        if self.num_level_set % 2:
+            self.num_level_set += 1
 
         delta = 0.01
         x = np.arange(-2.1, 2.1, delta)
@@ -57,16 +58,16 @@ class CvxOptViz(ThreeDScene):
         if self.fmax is None:
             self.fmax = Z.max()
 
-        scale = np.logspace(-3, 0, self.num_level)    
+        scale = np.logspace(-3, 0, self.num_level_set)    
         self.level_val = self.fstar + (self.fmax - self.fstar) * scale
 
-        r_channel = np.linspace(0, 255, self.num_level//2, dtype='int')
-        r_channel = np.concatenate([r_channel, np.ones(self.num_level//2, dtype='int')*255])
-        g_channel = np.linspace(255, 0, self.num_level//2, dtype='int')
-        g_channel = np.concatenate([np.ones(self.num_level//2, dtype='int')*255, g_channel])
+        r_channel = np.linspace(0, 255, self.num_level_set//2, dtype='int')
+        r_channel = np.concatenate([r_channel, np.ones(self.num_level_set//2, dtype='int')*255])
+        g_channel = np.linspace(255, 0, self.num_level_set//2, dtype='int')
+        g_channel = np.concatenate([np.ones(self.num_level_set//2, dtype='int')*255, g_channel])
 
         self.level_color = []
-        for i in range(self.num_level):
+        for i in range(self.num_level_set):
             self.level_color.append((f'#{r_channel[i]:02X}{g_channel[i]:02X}{0:02X}', self.level_val[i]))
 
         fig = plt.figure()
@@ -155,44 +156,23 @@ class CvxOptViz(ThreeDScene):
         return np.array([x1, x2, self.fx(x1, x2)])
 
 
-    def _test_core_attribute(self):
-        try:
-            self.max_iter
-        except AttributeError:
-            self.max_iter = 5
+    def _check_core_attribute(self):
+        default_val = {'max_iter': 5, 'mode': '3d', 'num_level_set': 20,
+                       'fstar': None, 'fmax': None, 'x10': None, 'x20': None}
 
-        try:
-            self.mode
-        except AttributeError:
-            self.mode = '3d'
-        
-        try:
-            self.num_level
-        except AttributeError:
-            self.num_level = 20
-        
-        try:
-            self.fstar
-        except AttributeError:
-            self.fstar = None
-        
-        try:
-            self.fmax
-        except AttributeError:
-            self.fmax = None
-        
-        try:
-            self.x10
-        except AttributeError:
+        # Primary initialization and checking
+        for attr in default_val:
+            if attr not in CvxOptViz.__dict__:
+                CvxOptViz.__setattr__(self, attr, default_val[attr])
+
+        if self.x10 is None:
             if np.random.rand() < 0.5:
                 sign = -1
             else:
                 sign = 1
             self.x10 = sign * (np.random.rand()*0.5 + 1.5)
 
-        try:
-            self.x20
-        except AttributeError:
+        if self.x20 is None:
             if np.random.rand() < 0.5:
                 sign = -1
             else:
@@ -200,8 +180,8 @@ class CvxOptViz(ThreeDScene):
             self.x20 = sign * (np.random.rand()*0.5 + 1.5)
     
 
-    def _test_derive_attribute(self):
-        raise NotImplementedError('You need to overide update_step method')
+    def _check_derive_attribute(self):
+        raise NotImplementedError('You need to overide check_derive_attribute method')
 
 
     def fx(self, x1, x2):
