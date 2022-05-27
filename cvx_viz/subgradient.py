@@ -12,16 +12,37 @@ class SubGradientDescent (CvxOptViz):
     
     def update_step (self, x1, x2):
         g = self.dfx(x1, x2)
-        x1 = x1 - self.step_size * g[0]
-        x2 = x2 - self.step_size * g[1]
-        return x1, x2 
+        x1_next = x1 - self.step_size * g[0]
+        x2_next = x2 - self.step_size * g[1]
+        return x1_next, x2_next 
+
+    
+    def check_derive_attribute(self):
+        default_val = {'step_size': 1}
+
+        self._check_attribute(default_val)
+
+        self.apply_constraints_3D = False
+        self.apply_constraints_2D = False
+
+        if self.verbose:
+            self._print_attribute(default_val, 'Derive')
     
     
-    def _check_derive_attribute(self):
-        try:
-            self.step_size
-        except AttributeError:
-            self.step_size = 1
+    def initial_context(self):
+        g = self.dfx(self.x10, self.x20)
+        x1_next, x2_next = self.update_step(self.x10, self.x20)
+        formula = MathTex(f'x^{{(k+1)}} = x^k - \\alpha g ', font_size=30)
+        context = MathTex(f'\\begin{{bmatrix}} {x1_next:.2f} \\\\ {x2_next:.2f} \\end{{bmatrix}} = \\begin{{bmatrix}} {self.x10:.2f} \\\\ {self.x20:.2f} \\end{{bmatrix}} - {self.step_size} \\begin{{bmatrix}} {g[0]:.2f} \\\\ {g[1]:.2f} \\end{{bmatrix}} ', font_size=25)
+        return formula, context
+    
+
+    def update_context(self, x1, x2):
+        g = self.dfx(x1, x2)
+        x1_next, x2_next = self.update_step(x1, x2)
+        formula = MathTex(f'x^{{(k+1)}} = x^k - \\alpha g ', font_size=30)
+        context = MathTex(f'\\begin{{bmatrix}} {x1_next:.2f} \\\\ {x2_next:.2f} \\end{{bmatrix}} = \\begin{{bmatrix}} {x1:.2f} \\\\ {x2:.2f} \\end{{bmatrix}} - {self.step_size} \\begin{{bmatrix}} {g[0]:.2f} \\\\ {g[1]:.2f} \\end{{bmatrix}} ', font_size=25)
+        return formula, context
 
 
 class SubGradientDescentWithMomentum (CvxOptViz):
@@ -37,15 +58,18 @@ class SubGradientDescentWithMomentum (CvxOptViz):
         return x1, x2 
     
     
-    def _check_derive_attribute(self):
-        try:
-            self.step_size
-        except AttributeError:
-            self.step_size = 1
+    def check_derive_attribute(self):
+        default_val = {'step_size': 1, 'beta': 0.01}
 
-        try:
-            self.beta
-        except AttributeError:
-            self.beta = 0.01
-        
+        self._check_attribute(default_val)
+    
         self.v = np.zeros(2)
+
+        self.apply_constraints_3D = False
+        self.apply_constraints_2D = False
+
+        self.display_context = False
+
+        if self.verbose:
+            self._print_attribute(default_val, 'Derive')
+        
