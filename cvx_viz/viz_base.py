@@ -29,12 +29,12 @@ class CvxOptViz(ThreeDScene):
     
 
     def _create_3D_axes(self):
-        x0_offset = (self.x0_range[1] - self.x0_range[0]) * 0.1
-        x0_tick = (self.x0_range[1] - self.x0_range[0])  * 0.1
-        x1_offset = (self.x1_range[1] - self.x1_range[0]) * 0.1
-        x1_tick = (self.x0_range[1] - self.x0_range[0])  * 0.1
-        fx_offset = (self.fx_range[1] - self.fx_range[0]) * 0.1
-        fx_tick = (self.fx_range[1] - self.fx_range[0])  * 0.1
+        x0_offset = (self.x0_range[1] - self.x0_range[0]) * 0.25
+        x0_tick = (self.x0_range[1] - self.x0_range[0])  * 0.25
+        x1_offset = (self.x1_range[1] - self.x1_range[0]) * 0.25
+        x1_tick = (self.x0_range[1] - self.x0_range[0])  * 0.25
+        fx_offset = (self.fx_range[1] - self.fx_range[0]) * 0.25
+        fx_tick = (self.fx_range[1] - self.fx_range[0])  * 0.25
         axe_x_range = [self.x0_range[0] - x0_offset, self.x0_range[1] + x0_offset, x0_tick]
         axe_y_range = [self.x1_range[0] - x1_offset, self.x1_range[1] + x1_offset, x1_tick]
         axe_z_range = [self.fx_range[0] - fx_offset, self.fx_range[1] + fx_offset, fx_tick]
@@ -174,14 +174,14 @@ class CvxOptViz(ThreeDScene):
         def _x_updater (x):
             x1 = x1t.get_value()
             x2 = x2t.get_value()
-            x.move_to(self.axes.c2p(x1, x2, fx(x1, x2)))
+            x.move_to(self.axes.c2p(x1, x2, self._opt_surface(x1, x2, apply_constraints=self.apply_constraints_3D)))
 
         def _x2D_updater (x):
             x1 = x1t.get_value()
             x2 = x2t.get_value()
             x.move_to(self.axes.c2p(x1, x2, self.fstar))
 
-        x = Dot3D(self.axes.c2p(x1, x2, fx(x1, x2)), radius=0.05, color=BLUE)
+        x = Dot3D(self.axes.c2p(x1, x2, self._opt_surface(x1, x2, apply_constraints=self.apply_constraints_3D)), radius=0.05, color=BLUE)
         x_2D = Dot3D(self.axes.c2p(x1, x2, self.fstar), radius=0.05, color=BLUE)
         
         line =DashedLine(x.get_center(), x_2D.get_center())
@@ -212,12 +212,12 @@ class CvxOptViz(ThreeDScene):
         self.add(path)
 
         # Set up motion camera if cam mode set to
-        if 'cam_mode' == 'zaxis_rotation':
+        if self.cam_mode == 'zaxis_rotation':
             if self.zaxis_rotation_rate is None:
                 self.zaxis_rotation_rate = PI/15
             self.begin_ambient_camera_rotation(rate= self.zaxis_rotation_rate, about="theta") 
 
-        if 'cam_mode' == '3d_illusion':
+        if self.cam_mode == '3d_illusion':
             if self.illusion_rate is None:
                 self.illusion_rate = 1
             self.begin_3dillusion_camera_rotation(rate=self.illusion_rate)
@@ -227,15 +227,15 @@ class CvxOptViz(ThreeDScene):
         
         for i in range(self.max_iter):
             if self.display_context:
-                self._transform_context(x1, x2)
-            x1, x2 = self.update_step(x1, x2)
-            self.play(x1t.animate.set_value(x1), x2t.animate.set_value(x2))
+                self._transform_context(x1, x2, i)
+            x1, x2 = self.update_step(x1, x2, i)
+            self.play(x1t.animate.set_value(x1), x2t.animate.set_value(x2), run_time=self.animation_run_time)
         self.wait(1)
 
         # Stop camera movement
-        if 'cam_mode' == 'zaxis_rotation':
+        if self.cam_mode == 'zaxis_rotation':
             self.stop_ambient_camera_rotation()
-        if 'cam_mode' == '3d_illusion':
+        if self.cam_mode == '3d_illusion':
             self.stop_3dillusion_camera_rotation()
 
 
@@ -246,11 +246,14 @@ class CvxOptViz(ThreeDScene):
         self.add_fixed_in_frame_mobjects(self.ctxs)
     
 
-    def _transform_context(self, x1, x2):
-        transform_target = VGroup(*self.update_context(x1, x2))
-        transform_target.arrange(DOWN, aligned_edge=LEFT)
-        transform_target.to_corner(UL)
-        self.play(Transform(self.ctxs, transform_target))
+    def _transform_context(self, x1, x2, it=None):
+        self.play(FadeOut(self.ctxs), run_time=0.1)
+        self.remove(self.ctxs)
+        self.ctxs = VGroup(*self.update_context(x1, x2, it))
+        self.ctxs.arrange(DOWN, aligned_edge=LEFT)
+        self.ctxs.to_corner(UL)
+        self.add_fixed_in_frame_mobjects(self.ctxs)
+        self.wait(0.4)
 
 
     def _opt_surface(self, x1, x2, apply_constraints=False):
@@ -299,9 +302,10 @@ class CvxOptViz(ThreeDScene):
                        'verbose': True, 'display_axes': True, 'anime': True,
                        'cam_mode': 'fixed',
                        'fixed_cam_preset': 'Q4', 'cam_theta': None, 'cam_phi': None, 
+                       'animation_run_time': 1, 
                        'illusion_rate': None, 'zaxis_rotation_rate': None,
                        'apply_constraints_2D': False, 'apply_constraints_3D': False,
-                       'display_context': False}
+                       'display_context': False,}
         
         mode_choice = ['3d', '2d']
         cam_mode_choice = ['fixed', '3d_illusion', 'zaxis_rotation']
@@ -357,7 +361,7 @@ class CvxOptViz(ThreeDScene):
         raise NotImplementedError('You need to overide constraints method')
 
     
-    def update_step (self, x1, x2):
+    def update_step (self, x1, x2, it=None):
         raise NotImplementedError('You need to overide update_step method')
 
 
@@ -365,5 +369,5 @@ class CvxOptViz(ThreeDScene):
         raise NotImplementedError('You need to overide initial_context method')
     
 
-    def update_context (self, x1, x2):
+    def update_context (self, x1, x2, it=None):
         raise NotImplementedError('You need to overide update_context method')
