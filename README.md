@@ -1,7 +1,7 @@
+**Version** 0.1.0
+
 # cvx_viz
 Visualize convex optimization with ManimCE. A EE364B Project. 
-
-**Version** 0.01
 
 ## Quickstart
 
